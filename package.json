@@ -1,0 +1,28 @@
+{
+  "name": "@tagplay/tagplay-standalone-post",
+  "version": "0.0.0",
+  "description": "A single post from feed representation",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tagplay/tagplay-standalone-post.git"
+  },
+  "keywords": [
+    "tagplay",
+    "widget",
+    "post",
+    "dom"
+  ],
+  "author": "Fannar Snær <fannar@lambagras.is>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tagplay/tagplay-standalone-post/issues"
+  },
+  "homepage": "https://github.com/tagplay/tagplay-standalone-post",
+  "dependencies": {
+    "img": "^1.0.0"
+  }
+}
