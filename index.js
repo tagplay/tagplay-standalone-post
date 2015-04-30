@@ -12,29 +12,62 @@ function widget (post, opt, callback) {
   if (!opt) opt = {};
 
   var container = document.createElement('div');
-  container.setAttribute('class', 'tagplay-media-container');
+  container.setAttribute('class', 'tagplay-media-container tagplay-media-' + post.provider.name);
+
+  var postElem = document.createElement('div');
+  postElem.setAttribute('class', 'tagplay-media-inner');
 
   if (opt['include-usernames']) {
-    container.appendChild(text('@' + post.provider.username, 'tagplay-media-username'));
+    postElem.appendChild(text(post.provider.username, 'tagplay-media-username'));
   }
 
-  if (opt['no-images'] && opt['no-videos']) {
+  if (opt['no-images']) {
     // do nothing
-  } else if (post.type === 'image' && !opt['no-images']) {
-    container.appendChild(media(post));
-  } else if (post.type === 'video') {
-    container.appendChild(media(post, opt['no-videos']));
+  } else if (post.image) {
+    postElem.appendChild(media(post, opt['no-videos']));
   }
 
-  if (opt['include-captions']) {
-    container.appendChild(text(post.normalized_text, 'tagplay-media-text'));
+  if (post.normalized_text && (opt['include-captions'] || opt['no-images'] || post.type === 'text')) {
+    postElem.appendChild(text(post.normalized_text, 'tagplay-media-text'));
   }
-  if (opt['include-dates']) {
-    var time = post.provider.created_time.replace('T', ' ').substring(0,16);
-    container.appendChild(text(time, 'tagplay-media-date'));
+  if (opt['include-dates'] || opt['include-times']) {
+    postElem.appendChild(text(timestamp(post, opt['include-dates'], opt['include-times']), 'tagplay-media-date'));
   }
+
+  container.appendChild(postElem);
 
   return container;
+}
+
+function timestamp(post, includeDates, includeTimes) {
+  var createdTime = new Date(post.provider.created_time);
+  var now = new Date();
+  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var timeComponents = [];
+
+  if (includeDates) {
+    var yearCreatedString = createdTime.getFullYear().toString();
+    var yearNowString = now.getFullYear().toString();
+    timeComponents.push(createdTime.getDate());
+    timeComponents.push(months[createdTime.getMonth()]);
+    if (yearCreatedString !== yearNowString) {
+      if (yearCreatedString.substring(0, 2) === yearNowString.substring(0, 2)) {
+        timeComponents.push(yearCreatedString.substring(2));
+      }
+      else {
+        timeComponents.push(yearCreatedString);
+      }
+    }
+  }
+  if (includeTimes) {
+    var hours = createdTime.getHours();
+    var minutes = createdTime.getMinutes();
+    if (minutes < 10) {
+      minutes = "0" + minutes;
+    }
+    timeComponents.push((hours > 12 ? hours - 12 : hours) + ":" + minutes + (hours >= 12 ? "pm" : "am"));
+  }
+  return timeComponents.join(" ");
 }
 
 function media(post, noVideo) {
