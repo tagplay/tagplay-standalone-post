@@ -27,8 +27,10 @@ function widget (post, opt, callback) {
     postElem.appendChild(media(post, opt['no-videos']));
   }
 
-  if (post.normalized_text && (opt['include-captions'] || opt['no-images'] || post.type === 'text')) {
-    postElem.appendChild(text(post.normalized_text, 'tagplay-media-text'));
+  var postText = (opt['text'] === 'normalized' ? post.normalized_text : opt['text'] === 'stripped' ? post.stripped_text : post.text);
+
+  if (postText && (opt['include-captions'] || opt['no-images'] || post.type === 'text')) {
+    postElem.appendChild(text(postText, 'tagplay-media-text'));
   }
   if (opt['include-dates'] || opt['include-times']) {
     postElem.appendChild(text(timestamp(post, opt['include-dates'], opt['include-times']), 'tagplay-media-date'));
