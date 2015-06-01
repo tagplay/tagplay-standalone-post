@@ -27,7 +27,7 @@ function widget (post, opt, callback) {
     postElem.appendChild(media(post, opt['no-videos']));
   }
 
-  var postText = (opt['text'] === 'normalized' ? post.normalized_text : opt['text'] === 'stripped' ? post.stripped_text : post.text);
+  var postText = (opt['text'] === 'normalized' ? post.normalized_text : opt['text'] === 'stripped' ? post.stripped_text : opt['text'] === 'tagless' ? post.tagless_text : post.text);
 
   if (postText && (opt['include-captions'] || opt['no-images'] || post.type === 'text')) {
     postElem.appendChild(text(postText, 'tagplay-media-text'));
