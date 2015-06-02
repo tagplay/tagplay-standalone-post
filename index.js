@@ -11,6 +11,28 @@ function widget (post, opt, callback) {
   }
   if (!opt) opt = {};
 
+  var client = opt.client;
+
+  var postActions = {
+    like: function(has_liked, callback) {
+      if (has_liked) {
+        client.unlikePost(opt.project, opt.feed, post.id, callback);
+      }
+      else {
+        client.likePost(opt.project, opt.feed, post.id, callback);
+      }
+    },
+
+    flag: function(has_flagged, callback) {
+      if (has_flagged) {
+        client.unflagPost(opt.project, opt.feed, post.id, callback);
+      }
+      else {
+        client.flagPost(opt.project, opt.feed, post.id, callback);
+      }
+    },
+  };
+
   var container = document.createElement('div');
   container.setAttribute('class', 'tagplay-media-container tagplay-media-' + post.provider.name);
 
@@ -32,6 +54,9 @@ function widget (post, opt, callback) {
   if (postText && (opt['include-captions'] || opt['no-images'] || post.type === 'text')) {
     postElem.appendChild(text(postText, 'tagplay-media-text'));
   }
+  if (opt['include-like'] || opt['include-flag']) {
+    postElem.appendChild(postOptions(post, opt['include-like'], opt['include-flag'], postActions));
+  }
   if (opt['include-dates'] || opt['include-times']) {
     postElem.appendChild(text(timestamp(post, opt['include-dates'], opt['include-times']), 'tagplay-media-date'));
   }
@@ -39,6 +64,51 @@ function widget (post, opt, callback) {
   container.appendChild(postElem);
 
   return container;
+}
+
+function icon(iconName, iconText) {
+  var el = document.createElement('i');
+  el.setAttribute('class', 'tagplay-icon tagplay-icon-' + iconName);
+  el.appendChild(document.createTextNode(iconText));
+  return el;
+}
+
+function likeButton(has_liked, likes, handleClick) {
+  var el = document.createElement('span');
+  el.setAttribute('class', 'tagplay-like' + (has_liked ? ' tagplay-user-liked' : ''));
+  el.appendChild(icon('like', '&#10084;'));
+  var textNode = document.createTextNode(' ' + likes);
+  el.appendChild(textNode);
+  el.onclick = function() {
+    handleClick(has_liked, function() {
+      el.parentNode.replaceChild(likeButton(!has_liked, likes + (has_liked ? -1 : 1), handleClick), el);
+    });
+  };
+  return el;
+}
+
+function flagButton(has_flagged, handleClick) {
+  var el = document.createElement('span');
+  el.setAttribute('class', 'tagplay-flag' + (has_flagged ? ' tagplay-user-flagged' : ''));
+  el.appendChild(icon('flag', 'Flag'));
+  el.onclick = function() {
+    handleClick(has_flagged, function() {
+      el.parentNode.replaceChild(flagButton(!has_flagged, handleClick), el);
+    });
+  };
+  return el;
+}
+
+function postOptions(post, includeLike, includeFlag, postActions) {
+  var el = document.createElement('p');
+  el.setAttribute('class', 'tagplay-media-options');
+  if (includeLike) {
+    el.appendChild(likeButton(post.meta.has_liked, post.meta.likes, postActions.like));
+  }
+  if (includeFlag) {
+    el.appendChild(flagButton(post.meta.has_flagged, postActions.flag));
+  }
+  return el;
 }
 
 function timestamp(post, includeDates, includeTimes) {
