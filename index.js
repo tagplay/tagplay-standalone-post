@@ -80,7 +80,11 @@ function likeButton(has_liked, likes, handleClick) {
   var textNode = document.createTextNode(' ' + likes);
   el.appendChild(textNode);
   el.onclick = function() {
-    handleClick(has_liked, function() {
+    handleClick(has_liked, function(err) {
+      if (err) {
+        alert(err.message);
+        return;
+      }
       el.parentNode.replaceChild(likeButton(!has_liked, likes + (has_liked ? -1 : 1), handleClick), el);
     });
   };
@@ -92,7 +96,11 @@ function flagButton(has_flagged, handleClick) {
   el.setAttribute('class', 'tagplay-flag' + (has_flagged ? ' tagplay-user-flagged' : ''));
   el.appendChild(icon('flag', 'Flag'));
   el.onclick = function() {
-    handleClick(has_flagged, function() {
+    handleClick(has_flagged, function(err) {
+      if (err) {
+        alert(err.message);
+        return;
+      }
       el.parentNode.replaceChild(flagButton(!has_flagged, handleClick), el);
     });
   };
