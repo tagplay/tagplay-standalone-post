@@ -1,6 +1,7 @@
 'use strict';
 
 var img = require('img');
+var linkify = require('html-linkify');
 
 module.exports = widget;
 
@@ -184,8 +185,8 @@ function vid(src, poster) {
 function text(txt, className) {
   var el = document.createElement('p');
   el.setAttribute('class', className);
-  var textNode = document.createTextNode(txt);
-  el.appendChild(textNode);
+  if (txt) txt = linkify(txt);
+  el.innerHTML = txt;
   return el;
 }
 
