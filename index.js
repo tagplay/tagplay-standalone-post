@@ -64,7 +64,7 @@ function widget (post, opt, callback) {
       linkElem.setAttribute('href', post.linked_metadata.href);
       linkElem.setAttribute('target', '_blank');
       linkElem.appendChild(document.createTextNode(post.linked_metadata.title || post.linked_metadata.href));
-      
+
       textElem.appendChild(linkElem);
     }
     postElem.appendChild(textElem);
@@ -160,7 +160,7 @@ function linkInfoTitle(post) {
   el.setAttribute('class', 'tagplay-link-info-title');
 
   var link = linkInfoLink(post);
-  link.appendChild(document.createTextNode(post.linked_metadata.title));
+  link.appendChild(document.createTextNode(post.linked_metadata.title || post.linked_metadata.href));
 
   el.appendChild(link);
   return el;
@@ -180,11 +180,11 @@ function linkInfoDescription(post) {
 function linkInfo(post, includeImage, includeDescription) {
   var el = document.createElement('div');
   el.setAttribute('class', 'tagplay-link-info');
-  if (includeImage) {
+  if (includeImage && post.linked_metadata.image) {
     el.appendChild(linkInfoImage(post));
   }
   el.appendChild(linkInfoTitle(post));
-  if (includeDescription) {
+  if (includeDescription && post.linked_metadata.description) {
     el.appendChild(linkInfoDescription(post));
   }
   return el;
