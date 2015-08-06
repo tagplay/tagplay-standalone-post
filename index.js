@@ -63,9 +63,11 @@ function widget (post, opt, callback) {
       var linkElem = document.createElement('a');
       linkElem.setAttribute('href', post.linked_metadata.href);
       linkElem.setAttribute('target', '_blank');
+      linkElem.appendChild(document.createTextNode(post.linked_metadata.title || post.linked_metadata.href));
+      
       textElem.appendChild(linkElem);
     }
-    postElem.appendChild(text(postText, 'tagplay-media-text'));
+    postElem.appendChild(textElem);
   }
   if (post.linked_metadata && opt['include-link-metadata']) {
     postElem.appendChild(linkInfo(post, !opt['no-link-image'], !opt['no-link-description']));
