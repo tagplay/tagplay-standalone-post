@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/tagplay/tagplay-standalone-post",
   "dependencies": {
-    "html-linkify": "^1.2.1",
+    "tagplay-text": "0.0.1",
     "img": "^1.0.0"
   }
 }

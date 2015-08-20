@@ -1,7 +1,7 @@
 'use strict';
 
 var img = require('img');
-var linkify = require('html-linkify');
+var tagplaytext = require('tagplay-text');
 
 module.exports = widget;
 
@@ -41,7 +41,23 @@ function widget (post, opt, callback) {
   postElem.setAttribute('class', 'tagplay-media-inner');
 
   if (opt['include-usernames']) {
-    postElem.appendChild(text(post.provider.username, 'tagplay-media-username'));
+    var usernameElem = text('', 'tagplay-media-username');
+    var usernameLink = document.createElement('a');
+    var href;
+    if (post.provider.name === 'instagram') {
+      href = 'https://instagram.com/' + post.provider.username;
+    }
+    else if (post.provider.name === 'twitter') {
+      href = 'https://twitter.com/' + post.provider.username;
+    }
+    else if (post.provider.name === 'facebook') {
+      href = 'https://www.facebook.com/' + post.provider.user_id;
+    }
+    usernameLink.setAttribute('href', href);
+    usernameLink.setAttribute('target', '_blank');
+    usernameLink.appendChild(document.createTextNode(post.provider.username));
+    usernameElem.appendChild(usernameLink);
+    postElem.appendChild(usernameElem);
   }
 
   if (opt['no-images']) {
@@ -50,24 +66,35 @@ function widget (post, opt, callback) {
     postElem.appendChild(media(post, opt['no-videos']));
   }
 
-  var postText = (opt['text'] === 'normalized' ? post.normalized_text : opt['text'] === 'stripped' ? post.stripped_text : opt['text'] === 'tagless' ? post.tagless_text : post.text) || '';
+  var postText = post.text;
 
   if (opt['include-captions'] || opt['no-images'] || post.type === 'text') {
-    var textElem = text(postText, 'tagplay-media-text');
+    var textElem = null;
+    if (postText) {
+      postText = tagplaytext.htmlize(postText, post.provider.name, post.links, opt['hashtags'] === 'remove_triggers' ? opt.trigger_tags : opt['hashtags'] === 'remove' ? true : false, opt['strip-hash']);
+      if (postText) {
+        textElem = text(postText, 'tagplay-media-text');
+      }
+    }
     if (post.linked_metadata && !opt['include-link-metadata'] && post.text.indexOf(post.linked_metadata.href) === -1) {
       // Add link to text
-      if (postText) {
-        textElem.appendChild(document.createElement('br'));
-        textElem.appendChild(document.createElement('br'));
-      }
       var linkElem = document.createElement('a');
       linkElem.setAttribute('href', post.linked_metadata.href);
       linkElem.setAttribute('target', '_blank');
       linkElem.appendChild(document.createTextNode(post.linked_metadata.title || post.linked_metadata.href));
 
+      if (textElem) {
+        textElem.appendChild(document.createElement('br'));
+        textElem.appendChild(document.createElement('br'));
+      }
+      else {
+        textElem = text('', 'tagplay-media-text');
+      }
       textElem.appendChild(linkElem);
     }
-    postElem.appendChild(textElem);
+    if (textElem) {
+      postElem.appendChild(textElem);
+    }
   }
   if (post.linked_metadata && opt['include-link-metadata']) {
     postElem.appendChild(linkInfo(post, !opt['no-link-image'], !opt['no-link-description']));
@@ -255,7 +282,6 @@ function vid(src, poster) {
 function text(txt, className) {
   var el = document.createElement('p');
   el.setAttribute('class', className);
-  if (txt) txt = linkify(txt);
   el.innerHTML = txt;
   return el;
 }
