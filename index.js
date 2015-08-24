@@ -2,6 +2,7 @@
 
 var img = require('img');
 var tagplaytext = require('tagplay-text');
+var twemoji = require('twemoji');
 
 module.exports = widget;
 
@@ -60,18 +61,18 @@ function widget (post, opt, callback) {
     postElem.appendChild(usernameElem);
   }
 
-  if (opt['no-images']) {
+  if (opt.no_images) {
     // do nothing
   } else if (post.image) {
-    postElem.appendChild(media(post, opt['no-videos']));
+    postElem.appendChild(media(post, opt.no_videos));
   }
 
   var postText = post.text;
 
-  if (opt['include-captions'] || opt['no-images'] || post.type === 'text') {
+  if (opt.include_captions || opt.no_images || post.type === 'text') {
     var textElem = null;
     if (postText) {
-      postText = tagplaytext.htmlize(postText, post.provider.name, post.links, opt['hashtags'] === 'remove_triggers' ? opt.trigger_tags : opt['hashtags'] === 'remove' ? true : false, opt['strip-hash']);
+      postText = twemoji.parse(tagplaytext.htmlize(postText, post.provider.name, post.links, opt['hashtags'] === 'remove_triggers' ? opt.trigger_tags : opt['hashtags'] === 'remove' ? true : false, opt.strip_hash));
       if (postText) {
         textElem = text(postText, 'tagplay-media-text');
       }

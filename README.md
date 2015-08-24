@@ -1,2 +1,4 @@
 # tagplay-standalone-post
-A single post from feed representation
+A representation of a single post from a Tagplay feed.
+
+Emoji support provided by [Twemoji](https://github.com/twitter/twemoji), licensed under CC-BY.
