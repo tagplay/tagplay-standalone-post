@@ -6,9 +6,9 @@ var twemoji = require('twemoji');
 
 module.exports = widget;
 
-function widget (post, opt, callback) {
+function widget (post, opt, onclick) {
   if (typeof opt === 'function') {
-    callback = opt;
+    onclick = opt;
     opt = undefined;
   }
   if (!opt) opt = {};
@@ -37,6 +37,9 @@ function widget (post, opt, callback) {
 
   var container = document.createElement('div');
   container.setAttribute('class', 'tagplay-media-container tagplay-media-' + post.provider.name);
+  if (onclick) {
+    container.onclick = onclick;
+  }
 
   var postElem = document.createElement('div');
   postElem.setAttribute('class', 'tagplay-media-inner');
@@ -64,7 +67,7 @@ function widget (post, opt, callback) {
   if (opt.no_images) {
     // do nothing
   } else if (post.image) {
-    postElem.appendChild(media(post, opt.no_videos));
+    postElem.appendChild(media(post, opt.no_videos, onclick));
   }
 
   var postText = post.text;
@@ -249,7 +252,7 @@ function timestamp(post, includeDates, includeTimes) {
   return timeComponents.join(" ");
 }
 
-function media(post, noVideo) {
+function media(post, noVideo, onclick) {
   var imgSrc = post.image.sources[0].url;
 
   var mediaElem = document.createElement('div');
@@ -259,6 +262,17 @@ function media(post, noVideo) {
   image.setAttribute('class', 'tagplay-media-object');
   var a = link(post.provider.origin || imgSrc);
   a.appendChild(image);
+
+  if (onclick) {
+    // We have an onclick handler for the post - stop the link from acting as a link
+    a.onclick = function(e) {
+      if (!e) var e = window.event;
+      if (onclick) {
+        e.returnValue = false;
+        if (e.preventDefault) e.preventDefault();
+      }
+    };
+  }
 
   if (post.type === 'video' && !noVideo) {
     var video = vid(post.video.sources[0].url, imgSrc);
