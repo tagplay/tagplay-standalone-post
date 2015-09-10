@@ -1,6 +1,6 @@
 {
   "name": "@tagplay/tagplay-standalone-post",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "A single post from feed representation",
   "main": "index.js",
   "scripts": {
