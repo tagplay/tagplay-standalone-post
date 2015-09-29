@@ -1,7 +1,7 @@
 {
-  "name": "@tagplay/tagplay-standalone-post",
+  "name": "tagplay-standalone-post",
   "version": "1.8.1",
-  "description": "A single post from feed representation",
+  "description": "A representation of a single post from a Tagplay feed.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
