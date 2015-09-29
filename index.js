@@ -16,23 +16,21 @@ function widget (post, opt, onclick) {
   var client = opt.client;
 
   var postActions = {
-    like: function(has_liked, callback) {
+    like: function (has_liked, callback) {
       if (has_liked) {
         client.unlikePost(opt.project, opt.feed, post.id, callback);
-      }
-      else {
+      } else {
         client.likePost(opt.project, opt.feed, post.id, callback);
       }
     },
 
-    flag: function(has_flagged, callback) {
+    flag: function (has_flagged, callback) {
       if (has_flagged) {
         client.unflagPost(opt.project, opt.feed, post.id, callback);
-      }
-      else {
+      } else {
         client.flagPost(opt.project, opt.feed, post.id, callback);
       }
-    },
+    }
   };
 
   var container = document.createElement('div');
@@ -50,11 +48,9 @@ function widget (post, opt, onclick) {
     var href;
     if (post.provider.name === 'instagram') {
       href = 'https://instagram.com/' + post.provider.username;
-    }
-    else if (post.provider.name === 'twitter') {
+    } else if (post.provider.name === 'twitter') {
       href = 'https://twitter.com/' + post.provider.username;
-    }
-    else if (post.provider.name === 'facebook') {
+    } else if (post.provider.name === 'facebook') {
       href = 'https://www.facebook.com/' + post.provider.user_id;
     }
     usernameLink.setAttribute('href', href);
@@ -75,7 +71,11 @@ function widget (post, opt, onclick) {
   if (opt.include_captions || opt.no_images || post.type === 'text') {
     var textElem = null;
     if (postText) {
-      postText = twemoji.parse(tagplaytext.htmlize(postText, post.provider.name, post.links, opt['hashtags'] === 'remove_triggers' ? opt.trigger_tags : opt['hashtags'] === 'remove' ? true : false, opt.strip_hash));
+      var removeTriggers = opt['hashtags'] === 'remove_triggers'
+        ? opt.trigger_tags
+        : opt['hashtags'] === 'remove';
+      var htmlized = tagplaytext.htmlize(postText, post.provider.name, post.links, removeTriggers, opt.strip_hash);
+      postText = twemoji.parse(htmlized);
       if (postText) {
         textElem = text(postText, 'tagplay-media-text');
       }
@@ -90,8 +90,7 @@ function widget (post, opt, onclick) {
       if (textElem) {
         textElem.appendChild(document.createElement('br'));
         textElem.appendChild(document.createElement('br'));
-      }
-      else {
+      } else {
         textElem = text('', 'tagplay-media-text');
       }
       textElem.appendChild(linkElem);
@@ -115,21 +114,21 @@ function widget (post, opt, onclick) {
   return container;
 }
 
-function icon(iconName, iconText) {
+function icon (iconName, iconText) {
   var el = document.createElement('i');
   el.setAttribute('class', 'tagplay-icon tagplay-icon-' + iconName);
   el.appendChild(document.createTextNode(iconText));
   return el;
 }
 
-function likeButton(has_liked, likes, handleClick) {
+function likeButton (has_liked, likes, handleClick) {
   var el = document.createElement('span');
   el.setAttribute('class', 'tagplay-like' + (has_liked ? ' tagplay-user-liked' : ''));
   el.appendChild(icon('like', '&#10084;'));
   var textNode = document.createTextNode(' ' + likes);
   el.appendChild(textNode);
-  el.onclick = function() {
-    handleClick(has_liked, function(err) {
+  el.onclick = function () {
+    handleClick(has_liked, function (err) {
       if (err) {
         alert(err.message);
         return;
@@ -140,12 +139,12 @@ function likeButton(has_liked, likes, handleClick) {
   return el;
 }
 
-function flagButton(has_flagged, handleClick) {
+function flagButton (has_flagged, handleClick) {
   var el = document.createElement('span');
   el.setAttribute('class', 'tagplay-flag' + (has_flagged ? ' tagplay-user-flagged' : ''));
   el.appendChild(icon('flag', 'Flag'));
-  el.onclick = function() {
-    handleClick(has_flagged, function(err) {
+  el.onclick = function () {
+    handleClick(has_flagged, function (err) {
       if (err) {
         alert(err.message);
         return;
@@ -156,7 +155,7 @@ function flagButton(has_flagged, handleClick) {
   return el;
 }
 
-function postOptions(post, includeLike, includeFlag, postActions) {
+function postOptions (post, includeLike, includeFlag, postActions) {
   var el = document.createElement('p');
   el.setAttribute('class', 'tagplay-media-options');
   if (includeLike) {
@@ -168,7 +167,7 @@ function postOptions(post, includeLike, includeFlag, postActions) {
   return el;
 }
 
-function linkInfoLink(post) {
+function linkInfoLink (post) {
   var el = document.createElement('a');
   el.setAttribute('class', 'tagplay-link-info-link');
   el.setAttribute('href', post.linked_metadata.href);
@@ -177,7 +176,7 @@ function linkInfoLink(post) {
   return el;
 }
 
-function linkInfoImage(post) {
+function linkInfoImage (post) {
   var image = img(post.linked_metadata.image.sources[0].url);
   image.setAttribute('class', 'tagplay-link-info-image');
   var link = linkInfoLink(post);
@@ -186,7 +185,7 @@ function linkInfoImage(post) {
   return link;
 }
 
-function linkInfoTitle(post) {
+function linkInfoTitle (post) {
   var el = document.createElement('h4');
   el.setAttribute('class', 'tagplay-link-info-title');
 
@@ -197,7 +196,7 @@ function linkInfoTitle(post) {
   return el;
 }
 
-function linkInfoDescription(post) {
+function linkInfoDescription (post) {
   var el = document.createElement('p');
   el.setAttribute('class', 'tagplay-link-info-description');
 
@@ -208,7 +207,7 @@ function linkInfoDescription(post) {
   return el;
 }
 
-function linkInfo(post, includeImage, includeDescription) {
+function linkInfo (post, includeImage, includeDescription) {
   var el = document.createElement('div');
   el.setAttribute('class', 'tagplay-link-info');
   if (includeImage && post.linked_metadata.image) {
@@ -221,7 +220,7 @@ function linkInfo(post, includeImage, includeDescription) {
   return el;
 }
 
-function timestamp(post, includeDates, includeTimes) {
+function timestamp (post, includeDates, includeTimes) {
   var createdTime = new Date(post.provider.created_time);
   var now = new Date();
   var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -235,8 +234,7 @@ function timestamp(post, includeDates, includeTimes) {
     if (yearCreatedString !== yearNowString) {
       if (yearCreatedString.substring(0, 2) === yearNowString.substring(0, 2)) {
         timeComponents.push(yearCreatedString.substring(2));
-      }
-      else {
+      } else {
         timeComponents.push(yearCreatedString);
       }
     }
@@ -245,14 +243,14 @@ function timestamp(post, includeDates, includeTimes) {
     var hours = createdTime.getHours();
     var minutes = createdTime.getMinutes();
     if (minutes < 10) {
-      minutes = "0" + minutes;
+      minutes = '0' + minutes;
     }
-    timeComponents.push((hours > 12 ? hours - 12 : hours) + ":" + minutes + (hours >= 12 ? "pm" : "am"));
+    timeComponents.push((hours > 12 ? hours - 12 : hours) + ':' + minutes + (hours >= 12 ? 'pm' : 'am'));
   }
-  return timeComponents.join(" ");
+  return timeComponents.join(' ');
 }
 
-function media(post, noVideo, onclick) {
+function media (post, noVideo, onclick) {
   var imgSrc = post.image.sources[0].url;
 
   var mediaElem = document.createElement('div');
@@ -265,8 +263,8 @@ function media(post, noVideo, onclick) {
 
   if (onclick) {
     // We have an onclick handler for the post - stop the link from acting as a link
-    a.onclick = function(e) {
-      if (!e) var e = window.event;
+    a.onclick = function (e) {
+      if (!e) e = window.event;
       if (onclick) {
         e.returnValue = false;
         if (e.preventDefault) e.preventDefault();
@@ -284,7 +282,7 @@ function media(post, noVideo, onclick) {
   return mediaElem;
 }
 
-function vid(src, poster) {
+function vid (src, poster) {
   var video = document.createElement('video');
   video.setAttribute('class', 'tagplay-media-object');
   video.setAttribute('src', src);
@@ -294,14 +292,14 @@ function vid(src, poster) {
   return video;
 }
 
-function text(txt, className) {
+function text (txt, className) {
   var el = document.createElement('p');
   el.setAttribute('class', className);
   el.innerHTML = txt;
   return el;
 }
 
-function link(href) {
+function link (href) {
   var linkElem = document.createElement('a');
   linkElem.setAttribute('href', href);
   linkElem.setAttribute('class', 'tagplay-media-link');
