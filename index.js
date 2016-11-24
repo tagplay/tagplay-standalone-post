@@ -314,7 +314,7 @@ function media (post, opt, onclick) {
       });
     } else if (opt.lightbox) {
       // This is a video, but we're not showing it inline
-      mediaElem.setAttribute('class', 'tagplay-media-object tagplay-media-video');
+      mediaElem.setAttribute('class', 'tagplay-media tagplay-media-video');
       mediaElem.appendChild(a);
     }
   } else {
