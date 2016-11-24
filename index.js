@@ -60,10 +60,8 @@ function widget (post, opt, onclick) {
     postElem.appendChild(usernameElem);
   }
 
-  if (opt.no_images) {
-    // do nothing
-  } else if (post.image) {
-    postElem.appendChild(media(post, opt.no_videos, onclick));
+  if (post.image && !opt.no_images || post.video && !opt.no_videos) {
+    postElem.appendChild(media(post, opt, onclick));
   }
 
   var postText = post.text;
@@ -250,7 +248,7 @@ function timestamp (post, includeDates, includeTimes) {
   return timeComponents.join(' ');
 }
 
-function media (post, noVideo, onclick) {
+function media (post, opt, onclick) {
   var imgSrc = post.image.sources[0].url;
 
   var mediaElem = document.createElement('div');
@@ -272,22 +270,79 @@ function media (post, noVideo, onclick) {
     };
   }
 
-  if (post.type === 'video' && !noVideo) {
-    var video = vid(post.video.sources[0].url, imgSrc);
-    video.appendChild(a);
-    mediaElem.appendChild(video);
+  if (post.type === 'video' && !opt.no_videos) {
+    if (opt.inline_video) {
+      var vidSrc = post.video.sources[0].url;
+      var options = {};
+      if (opt.play_video) {
+        options.autoplay = 1;
+      }
+      opt.client.getEmbedInfo(vidSrc, options, function (err, data) {
+        if (err) {
+          // We got an error from iframely - check if the link looks like a video file
+          if (vidSrc.substring(vidSrc.length - 4) === '.mp4') {
+            mediaElem.appendChild(vid(vidSrc, imgSrc, opt.play_video, opt.play_sound));
+          } else {
+            mediaElem.appendChild(a);
+          }
+          return;
+        }
+        if (data.links.file) {
+          // Just play the file as a normal video
+          var video = vid(data.links.file[0].href, imgSrc, opt.play_video, opt.play_sound);
+          video.appendChild(a);
+          mediaElem.appendChild(video);
+        } else if (data.links.player) {
+          if (data.links.player[0].href) {
+            // Simple embed iframe
+            mediaElem.appendChild(embed(data.links.player[0].href, post.video.sources[0].width, post.video.sources[0].height));
+          } else {
+            // Use iframely's provided embed HTML
+            var embedWrapper = document.createElement('div');
+            embedWrapper.setAttribute('class', 'tagplay-media-object');
+            embedWrapper.innerHTML = data.links.player[0].html;
+
+            mediaElem.appendChild(embedWrapper);
+            if (data.meta.site === 'Facebook') {
+              loadFB(mediaElem);
+            }
+          }
+        } else {
+          // We don't have a player - just append the a
+          mediaElem.appendChild(a);
+        }
+      });
+    } else if (opt.lightbox) {
+      // This is a video, but we're not showing it inline
+      mediaElem.setAttribute('class', 'tagplay-media-object tagplay-media-video');
+      mediaElem.appendChild(a);
+    }
   } else {
     mediaElem.appendChild(a);
   }
   return mediaElem;
 }
 
-function vid (src, poster) {
+function embed (src, width, height) {
+  var div = document.createElement('div');
+  div.setAttribute('class', 'tagplay-media-object tagplay-media-embed');
+  div.style.paddingBottom = (height * 100 / width) + '%';
+
+  var iframe = document.createElement('iframe');
+  iframe.setAttribute('src', src);
+
+  div.appendChild(iframe);
+  return div;
+}
+
+function vid (src, poster, autoplay, playSound) {
   var video = document.createElement('video');
   video.setAttribute('class', 'tagplay-media-object');
   video.setAttribute('src', src);
   video.setAttribute('controls', true);
   video.setAttribute('preload', 'auto');
+  if (!playSound) video.setAttribute('muted', true);
+  if (autoplay) video.setAttribute('autoplay', true);
   if (poster) video.setAttribute('poster', poster);
   return video;
 }
@@ -305,4 +360,26 @@ function link (href) {
   linkElem.setAttribute('class', 'tagplay-media-link');
   linkElem.setAttribute('target', '_blank');
   return linkElem;
+}
+
+function loadFB (elem) {
+  (function (d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) {
+      // We've already loaded the Facebook SDK - just parse the element
+      FB.XFBML.parse(elem);
+    } else {
+      // Parse the element on init, then fetch the SDK
+      window.fbAsyncInit = function () {
+        FB.init({
+          xfbml      : true,
+          version    : 'v2.8'
+        });
+        FB.XFBML.parse(elem);
+      };
+      js = d.createElement(s); js.id = id;
+      js.src = '//connect.facebook.net/en_US/sdk.js';
+      fjs.parentNode.insertBefore(js, fjs);
+    }
+  }(document, 'script', 'facebook-jssdk'));
 }
