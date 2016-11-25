@@ -98,7 +98,7 @@ function widget (post, opt, onclick) {
     }
   }
   if (post.linked_metadata && opt['include-link-metadata']) {
-    postElem.appendChild(linkInfo(post, !opt['no-link-image'], !opt['no-link-description']));
+    postElem.appendChild(linkInfo(post, opt));
   }
   if (opt['include-like'] || opt['include-flag']) {
     postElem.appendChild(postOptions(post, opt['include-like'], opt['include-flag'], postActions));
@@ -205,15 +205,51 @@ function linkInfoDescription (post) {
   return el;
 }
 
-function linkInfo (post, includeImage, includeDescription) {
+function linkInfo (post, opt) {
+  var includeImage = !opt['no-link-image'];
+  var includeDescription = !opt['no-link-description'];
   var el = document.createElement('div');
   el.setAttribute('class', 'tagplay-link-info');
-  if (includeImage && post.linked_metadata.image) {
-    el.appendChild(linkInfoImage(post));
+
+  if (opt.embed_link_metadata) {
+    opt.client.getEmbedInfo(post.linked_metadata.href, {}, function (err, data) {
+      if (err) {
+        // We got an error from iframely - check if the link looks like a video file
+        fallback();
+        return;
+      }
+      if (data.links.player) {
+        // Use iframely's provided embed HTML
+        var embedWrapper = document.createElement('div');
+        embedWrapper.setAttribute('class', 'tagplay-media-object');
+        embedWrapper.innerHTML = data.links.player[0].html;
+
+        el.appendChild(embedWrapper);
+        addTitleDesc();
+        if (data.meta.site === 'Facebook') {
+          loadFB(el);
+        }
+      } else {
+        // We don't have a player - just use the fallback
+        fallback();
+      }
+    });
+  } else {
+    fallback();
   }
-  el.appendChild(linkInfoTitle(post));
-  if (includeDescription && post.linked_metadata.description) {
-    el.appendChild(linkInfoDescription(post));
+
+  function fallback () {
+    if (includeImage && post.linked_metadata.image) {
+      el.appendChild(linkInfoImage(post));
+    }
+    addTitleDesc();
+  }
+
+  function addTitleDesc () {
+    el.appendChild(linkInfoTitle(post));
+    if (includeDescription && post.linked_metadata.description) {
+      el.appendChild(linkInfoDescription(post));
+    }
   }
   return el;
 }
