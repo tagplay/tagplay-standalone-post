@@ -208,10 +208,11 @@ function linkInfoDescription (post) {
 function linkInfo (post, opt) {
   var includeImage = !opt['no-link-image'];
   var includeDescription = !opt['no-link-description'];
+  var includeEmbed = !opt['no-link-embed'] && opt.inline_link_embed;
   var el = document.createElement('div');
   el.setAttribute('class', 'tagplay-link-info');
 
-  if (opt.embed_link_metadata) {
+  if (includeEmbed) {
     opt.client.getEmbedInfo(post.linked_metadata.href, {}, function (err, data) {
       if (err) {
         // We got an error from iframely - check if the link looks like a video file
@@ -221,7 +222,7 @@ function linkInfo (post, opt) {
       if (data.links.player) {
         // Use iframely's provided embed HTML
         var embedWrapper = document.createElement('div');
-        embedWrapper.setAttribute('class', 'tagplay-media-object');
+        embedWrapper.setAttribute('class', 'tagplay-link-info-embed');
         embedWrapper.innerHTML = data.links.player[0].html;
 
         el.appendChild(embedWrapper);
@@ -329,20 +330,20 @@ function media (post, opt, onclick) {
           video.appendChild(a);
           mediaElem.appendChild(video);
         } else if (data.links.player) {
+          var embedWrapper = document.createElement('div');
+          embedWrapper.setAttribute('class', 'tagplay-media-embed');
           if (data.links.player[0].href) {
             // Simple embed iframe
-            mediaElem.appendChild(embed(data.links.player[0].href, post.video.sources[0].width, post.video.sources[0].height));
+            embedWrapper.appendChild(embed(data.links.player[0].href, post.video.sources[0].width, post.video.sources[0].height));
           } else {
             // Use iframely's provided embed HTML
-            var embedWrapper = document.createElement('div');
-            embedWrapper.setAttribute('class', 'tagplay-media-object');
             embedWrapper.innerHTML = data.links.player[0].html;
 
-            mediaElem.appendChild(embedWrapper);
             if (data.meta.site === 'Facebook') {
-              loadFB(mediaElem);
+              loadFB(embedWrapper);
             }
           }
+          mediaElem.appendChild(embedWrapper);
         } else {
           // We don't have a player - just append the a
           mediaElem.appendChild(a);
@@ -361,7 +362,7 @@ function media (post, opt, onclick) {
 
 function embed (src, width, height) {
   var div = document.createElement('div');
-  div.setAttribute('class', 'tagplay-media-object tagplay-media-embed');
+  div.setAttribute('class', 'tagplay-embed-iframe');
   div.style.paddingBottom = (height * 100 / width) + '%';
 
   var iframe = document.createElement('iframe');
