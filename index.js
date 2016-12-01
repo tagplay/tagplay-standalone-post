@@ -35,6 +35,16 @@ function widget (post, opt, onclick) {
 
   var container = document.createElement('div');
   container.setAttribute('class', 'tagplay-media-container tagplay-media-' + post.provider.name);
+
+  if (!post.text && !(post.image && !opt.no_images) && !(post.video && !opt.no_videos) && !(post.linked_metadata && opt['include-linked-metadata'])) {
+    // We want the container to be empty
+    if (opt.type === 'waterfall') {
+      // Hide the post completely
+      container.style.display = 'none';
+    }
+    return container;
+  }
+
   if (onclick) {
     container.onclick = onclick;
   }
