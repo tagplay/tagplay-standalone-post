@@ -6,7 +6,11 @@ var twemoji = require('twemoji');
 
 module.exports = widget;
 
-function widget (post, opt, onclick) {
+function isPostEmpty (post, opt) {
+  return !post.text && !(post.image && !opt.no_images) && !(post.video && !opt.no_videos) && !(post.linked_metadata && opt['include-linked-metadata']);
+}
+
+function widget (post, opt, onclick, mediaIndex) {
   if (typeof opt === 'function') {
     onclick = opt;
     opt = undefined;
@@ -36,7 +40,7 @@ function widget (post, opt, onclick) {
   var container = document.createElement('div');
   container.setAttribute('class', 'tagplay-media-container tagplay-media-' + post.provider.name);
 
-  if (!post.text && !(post.image && !opt.no_images) && !(post.video && !opt.no_videos) && !(post.linked_metadata && opt['include-linked-metadata'])) {
+  if (isPostEmpty(post, opt)) {
     // We want the container to be empty
     if (opt.type === 'waterfall') {
       // Hide the post completely
@@ -51,6 +55,15 @@ function widget (post, opt, onclick) {
 
   var postElem = document.createElement('div');
   postElem.setAttribute('class', 'tagplay-media-inner');
+
+  var numMedia = getPostMedia(post, opt).length;
+
+  if (mediaIndex !== undefined && numMedia > 1) {
+    var indexElem = document.createElement('div');
+    indexElem.setAttribute('class', 'tagplay-media-index');
+    indexElem.innerHTML = (mediaIndex + 1) + ' / ' + (numMedia);
+    postElem.appendChild(indexElem);
+  }
 
   if (opt['include-usernames']) {
     var usernameElem = text('', 'tagplay-media-username');
@@ -70,13 +83,19 @@ function widget (post, opt, onclick) {
     postElem.appendChild(usernameElem);
   }
 
-  if (post.image && !opt.no_images || post.video && !opt.no_videos) {
-    postElem.appendChild(media(post, opt, onclick));
+  var hasMedia = post.image && !opt.no_images || post.video && !opt.no_videos;
+
+  if (hasMedia) {
+    if (numMedia > 1 && mediaIndex === undefined) {
+      postElem.appendChild(mediaMultiple(post, opt, onclick));
+    } else {
+      postElem.appendChild(media(post, opt, onclick, mediaIndex));
+    }
   }
 
   var postText = post.text;
 
-  if (opt.include_captions || opt.no_images || post.type === 'text') {
+  if (opt.include_captions || !hasMedia) {
     var textElem = null;
     if (postText) {
       var removeTriggers = opt['hashtags'] === 'remove_triggers'
@@ -295,8 +314,188 @@ function timestamp (post, includeDates, includeTimes) {
   return timeComponents.join(' ');
 }
 
-function media (post, opt, onclick) {
-  var imgSrc = post.image.sources[0].url;
+function mediaMultiple (post, opt, onclick) {
+  function getNormalizedHeight (image) {
+    return image.sources[0].height * 100 / image.sources[0].width;
+  }
+
+  function appendContent (parent, content) {
+    if (!content.forEach) {
+      content = [content];
+    }
+    content.forEach(function (child) {
+      parent.appendChild(child);
+    });
+    return content;
+  }
+
+  function div (content, className) {
+    var el = document.createElement('div');
+    if (className) {
+      el.setAttribute('class', className);
+    }
+    appendContent(el, content);
+    return el;
+  }
+
+  function arrangeMediaElements (pattern, medias, numPhotos) {
+    function row (content) {
+      return div(content, 'tagplay-media-multi-row');
+    }
+
+    function cell (content, width) {
+      if (!width) width = 50;
+      var el = document.createElement('div');
+      el.setAttribute('class', 'tagplay-media-multi-cell');
+      el.style.width = width + '%';
+      appendContent(el, content);
+      return el;
+    }
+
+    function mediaElement (media, height) {
+      // Use the poster for videos
+      if (!height) {
+        height = getNormalizedHeight(media);
+      }
+      // If we have a poster property, it's a video and we want the poster or nothing; if not, it's an image and we want it
+      var isVideo = 'poster' in media;
+      var source = isVideo ? media.poster && media.poster.sources[0] : media.sources[0];
+      var el = document.createElement('div');
+      el.setAttribute('class', 'tagplay-media-multi-object' + (isVideo && !opt.no_videos ? ' tagplay-media-video' : ''));
+      el.style.paddingBottom = height + '%';
+      if (source) {
+        el.style.backgroundImage = 'url(' + source.url + ')';
+      } else {
+        // Black background fallback for videos with no poster
+        el.style.backgroundColor = '#000';
+      }
+      return el;
+    }
+
+    var patterns = {
+      'side-by-side': function (medias) {
+        var aspectRatio = medias.portrait.reduce(function (sum, media) {
+          return sum + getNormalizedHeight(media);
+        }, 0) / medias.portrait.length;
+
+        return medias.portrait.map(function (media, i) {
+          return cell(mediaElement(media, aspectRatio), 100 / medias.portrait.length);
+        });
+      },
+      'stacked': function (medias) {
+        return medias.landscape.map(function (media) {
+          return row(mediaElement(media, 100 / medias.landscape.length));
+        });
+      },
+      'landscape-portraits': function (medias) {
+        var aspectRatio = medias.portrait.reduce(function (sum, media) {
+          return sum + getNormalizedHeight(media);
+        }, 0) / 2;
+
+        return [
+          row(mediaElement(medias.landscape[0])),
+          row(medias.portrait.map(function (media) {
+            return cell(mediaElement(media, aspectRatio));
+          }))
+        ];
+      },
+      'portrait-landscapes': function (medias) {
+        var aspectRatio = (getNormalizedHeight(medias.portrait[0]) + medias.landscape.reduce(function (sum, media) {
+          return sum + getNormalizedHeight(media);
+        }, 0)) / 2;
+        return [
+          cell(mediaElement(medias.portrait[0], aspectRatio)),
+          cell(medias.landscape.map(function (media) {
+            return row(mediaElement(media, aspectRatio / 2));
+          }))
+        ];
+      },
+      'two-squares': function (medias) {
+        return medias.portrait.concat(medias.landscape).map(function (media) {
+          return cell(mediaElement(media, 100));
+        });
+      },
+      'two-by-two': function (medias) {
+        var media = medias.portrait.concat(medias.landscape);
+        var span = document.createElement('span');
+        span.setAttribute('class', 'tagplay-media-multi-more-text');
+        span.appendChild(document.createTextNode('+' + (numPhotos - 3)));
+        return [
+          row([
+            cell(mediaElement(media[0], 100)),
+            cell(mediaElement(media[1], 100))
+          ]),
+          row([
+            cell(mediaElement(media[2], 100)),
+            cell(numPhotos > 4 ? [
+              mediaElement(media[3], 100),
+              div(span, 'tagplay-media-multi-more')
+            ] : mediaElement(media[3], 100))
+          ])
+        ];
+      }
+    };
+
+    return patterns[pattern](medias);
+  }
+
+  function getPattern (medias) {
+    var totalMedias = medias.portrait.length + medias.landscape.length;
+    if (totalMedias >= 4) {
+      return 'two-by-two';
+    } else if (medias.portrait.length === 0) {
+      // Two or three landscapes; stack them
+      return 'stacked';
+    } else if (medias.landscape.length === 0) {
+      // Put them side by side
+      return 'side-by-side';
+    } else if (medias.portrait.length === 1 && medias.landscape.length === 1) {
+      // Two squares side by side
+      return 'two-squares';
+    } else if (medias.portrait.length === 1) {
+      // One portrait, two landscapes
+      return 'portrait-landscapes';
+    } else {
+      // Two portraits, one landscape
+      return 'landscape-portraits';
+    }
+  }
+
+  function splitByAspectRatio (images) {
+    var obj = {portrait: [], landscape: []};
+    images.forEach(function (image, i) {
+      image.index = i;
+      if (image.sources[0].height >= image.sources[0].width) {
+        obj.portrait.push(image);
+      } else {
+        obj.landscape.push(image);
+      }
+    });
+    return obj;
+  }
+
+  var medias = getPostMedia(post, opt);
+
+  var aspectRatioObj = splitByAspectRatio(medias.slice(0, 4));
+
+  var pattern = getPattern(aspectRatioObj);
+
+  return div(arrangeMediaElements(pattern, aspectRatioObj, medias.length), 'tagplay-media tagplay-media-multi');
+}
+
+function getPostMedia (post, opt) {
+  if (opt.no_images) {
+    return post.videos;
+  } else {
+    return post.videos.concat(post.images);
+  }
+}
+
+function media (post, opt, onclick, mediaIndex) {
+  var postMedia = getPostMedia(post, opt);
+  var selectedMedia = postMedia[mediaIndex || 0];
+
+  var imgSrc = 'poster' in selectedMedia ? selectedMedia.poster && selectedMedia.poster.sources[0].url : selectedMedia.sources[0].url;
 
   var mediaElem = document.createElement('div');
   mediaElem.setAttribute('class', 'tagplay-media');
@@ -317,18 +516,21 @@ function media (post, opt, onclick) {
     };
   }
 
-  if (post.type === 'video' && !opt.no_videos) {
+  if ('poster' in selectedMedia && !opt.no_videos) {
     if (opt.inline_video) {
-      var vidSrc = post.video.sources[0].url;
+      var vidSrc = selectedMedia.sources[0].url;
       var options = {};
       if (opt.play_video) {
         options.autoplay = 1;
       }
       opt.client.getEmbedInfo(vidSrc, options, function (err, data) {
+        var video;
         if (err) {
           // We got an error from iframely - check if the link looks like a video file
-          if (vidSrc.substring(vidSrc.length - 4) === '.mp4') {
-            mediaElem.appendChild(vid(vidSrc, imgSrc, opt.play_video, opt.play_sound));
+          if (vidSrc.indexOf('.mp4') !== -1 || vidSrc.indexOf('.webm') !== -1) {
+            video = vid(vidSrc, imgSrc, opt.play_video, opt.play_sound);
+            video.appendChild(a);
+            mediaElem.appendChild(video);
           } else {
             mediaElem.appendChild(a);
           }
@@ -336,7 +538,7 @@ function media (post, opt, onclick) {
         }
         if (data.links.file) {
           // Just play the file as a normal video
-          var video = vid(data.links.file[0].href, imgSrc, opt.play_video, opt.play_sound);
+          video = vid(data.links.file[0].href, imgSrc, opt.play_video, opt.play_sound);
           video.appendChild(a);
           mediaElem.appendChild(video);
         } else if (data.links.player) {
@@ -344,7 +546,7 @@ function media (post, opt, onclick) {
           embedWrapper.setAttribute('class', 'tagplay-media-embed');
           if (data.links.player[0].href) {
             // Simple embed iframe
-            embedWrapper.appendChild(embed(data.links.player[0].href, post.video.sources[0].width, post.video.sources[0].height));
+            embedWrapper.appendChild(embed(data.links.player[0].href, selectedMedia.sources[0].width, selectedMedia.sources[0].height));
           } else {
             // Use iframely's provided embed HTML
             embedWrapper.innerHTML = data.links.player[0].html;
