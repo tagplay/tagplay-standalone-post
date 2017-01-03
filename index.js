@@ -517,50 +517,59 @@ function media (post, opt, onclick, mediaIndex) {
   }
 
   if ('poster' in selectedMedia && !opt.no_videos) {
+    var video;
     if (opt.inline_video) {
       var vidSrc = selectedMedia.sources[0].url;
-      var options = {};
-      if (opt.play_video) {
-        options.autoplay = 1;
-      }
-      opt.client.getEmbedInfo(vidSrc, options, function (err, data) {
-        var video;
-        if (err) {
-          // We got an error from iframely - check if the link looks like a video file
-          if (vidSrc.indexOf('.mp4') !== -1 || vidSrc.indexOf('.webm') !== -1) {
-            video = vid(vidSrc, imgSrc, opt.play_video, opt.play_sound);
+
+      if (selectedMedia.sources[0].source_type === 'video') {
+        video = vid(vidSrc, imgSrc, opt.play_video, opt.play_sound);
+        video.appendChild(a);
+        mediaElem.appendChild(video);
+      } else if (selectedMedia.sources[0].source_type === 'embed') {
+        var options = {};
+        if (opt.play_video) {
+          options.autoplay = 1;
+        }
+        opt.client.getEmbedInfo(vidSrc, options, function (err, data) {
+          if (err) {
+            // We got an error from iframely - check if the link looks like a video file
+            if (vidSrc.source_type === 'video') {
+              video = vid(vidSrc, imgSrc, opt.play_video, opt.play_sound);
+              video.appendChild(a);
+              mediaElem.appendChild(video);
+            } else {
+              mediaElem.appendChild(a);
+            }
+            return;
+          }
+          if (data.links.file) {
+            // Just play the file as a normal video
+            video = vid(data.links.file[0].href, imgSrc, opt.play_video, opt.play_sound);
             video.appendChild(a);
             mediaElem.appendChild(video);
+          } else if (data.links.player) {
+            var embedWrapper = document.createElement('div');
+            embedWrapper.setAttribute('class', 'tagplay-media-embed');
+            if (data.links.player[0].href) {
+              // Simple embed iframe
+              embedWrapper.appendChild(embed(data.links.player[0].href, selectedMedia.sources[0].width, selectedMedia.sources[0].height));
+            } else {
+              // Use iframely's provided embed HTML
+              embedWrapper.innerHTML = data.links.player[0].html;
+
+              if (data.meta.site === 'Facebook') {
+                loadFB(embedWrapper);
+              }
+            }
+            mediaElem.appendChild(embedWrapper);
           } else {
+            // We don't have a player - just append the a
             mediaElem.appendChild(a);
           }
-          return;
-        }
-        if (data.links.file) {
-          // Just play the file as a normal video
-          video = vid(data.links.file[0].href, imgSrc, opt.play_video, opt.play_sound);
-          video.appendChild(a);
-          mediaElem.appendChild(video);
-        } else if (data.links.player) {
-          var embedWrapper = document.createElement('div');
-          embedWrapper.setAttribute('class', 'tagplay-media-embed');
-          if (data.links.player[0].href) {
-            // Simple embed iframe
-            embedWrapper.appendChild(embed(data.links.player[0].href, selectedMedia.sources[0].width, selectedMedia.sources[0].height));
-          } else {
-            // Use iframely's provided embed HTML
-            embedWrapper.innerHTML = data.links.player[0].html;
-
-            if (data.meta.site === 'Facebook') {
-              loadFB(embedWrapper);
-            }
-          }
-          mediaElem.appendChild(embedWrapper);
-        } else {
-          // We don't have a player - just append the a
-          mediaElem.appendChild(a);
-        }
-      });
+        });
+      } else {
+        mediaElem.appendChild(a);
+      }
     } else if (opt.lightbox) {
       // This is a video, but we're not showing it inline
       mediaElem.setAttribute('class', 'tagplay-media tagplay-media-video');
