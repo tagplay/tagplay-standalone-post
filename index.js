@@ -7,7 +7,7 @@ var twemoji = require('twemoji');
 module.exports = widget;
 
 function isPostEmpty (post, opt) {
-  return !post.text && !(post.image && !opt.no_images) && !(post.video && !opt.no_videos) && !(post.linked_metadata && opt['include-linked-metadata']);
+  return !post.text && !(post.image && !opt.no_images) && !(post.video && !opt.no_videos) && !(post.linked_metadata && opt['include-link-metadata']);
 }
 
 function widget (post, opt, onclick, mediaIndex) {
@@ -228,7 +228,9 @@ function linkInfoDescription (post) {
   el.setAttribute('class', 'tagplay-link-info-description');
 
   var link = linkInfoLink(post);
-  link.appendChild(document.createTextNode(post.linked_metadata.description));
+
+  var htmlized = tagplaytext.htmlize(post.linked_metadata.description, post.provider.name);
+  link.innerHTML = twemoji.parse(htmlized);
 
   el.appendChild(link);
   return el;
