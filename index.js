@@ -7,7 +7,7 @@ var twemoji = require('twemoji');
 module.exports = widget;
 
 function isPostEmpty (post, opt) {
-  return !post.text && !(post.image && !opt.no_images) && !(post.video && !opt.no_videos) && !(post.linked_metadata && opt['include-link-metadata']);
+  return !post.text && !(post.image && !opt.no_images) && !(post.video && !opt.no_videos) && !(post.linked_metadata && opt.include_link_metadata);
 }
 
 function widget (post, opt, onclick, mediaIndex) {
@@ -65,7 +65,7 @@ function widget (post, opt, onclick, mediaIndex) {
     postElem.appendChild(indexElem);
   }
 
-  if (opt['include-usernames']) {
+  if (opt.include_usernames) {
     var usernameElem = text('', 'tagplay-media-username');
     var usernameLink = document.createElement('a');
     var href;
@@ -98,16 +98,16 @@ function widget (post, opt, onclick, mediaIndex) {
   if (opt.include_captions || !hasMedia) {
     var textElem = null;
     if (postText) {
-      var removeTriggers = opt['hashtags'] === 'remove_triggers'
+      var removeTriggers = opt.hashtags === 'remove_triggers'
         ? opt.trigger_tags
-        : opt['hashtags'] === 'remove';
+        : opt.hashtags === 'remove';
       var htmlized = tagplaytext.htmlize(postText, post.provider.name, post.links, removeTriggers, opt.strip_hash);
       postText = twemoji.parse(htmlized);
       if (postText) {
         textElem = text(postText, 'tagplay-media-text');
       }
     }
-    if (post.linked_metadata && !opt['include-link-metadata'] && post.text.indexOf(post.linked_metadata.href) === -1) {
+    if (post.linked_metadata && !opt.include_link_metadata && post.text.indexOf(post.linked_metadata.href) === -1) {
       // Add link to text
       var linkElem = document.createElement('a');
       linkElem.setAttribute('href', post.linked_metadata.href);
@@ -126,14 +126,14 @@ function widget (post, opt, onclick, mediaIndex) {
       postElem.appendChild(textElem);
     }
   }
-  if (post.linked_metadata && opt['include-link-metadata']) {
+  if (post.linked_metadata && opt.include_link_metadata) {
     postElem.appendChild(linkInfo(post, opt));
   }
-  if (opt['include-like'] || opt['include-flag']) {
-    postElem.appendChild(postOptions(post, opt['include-like'], opt['include-flag'], postActions));
+  if (opt.include_like || opt.include_flag) {
+    postElem.appendChild(postOptions(post, opt.include_like, opt.include_flag, postActions));
   }
-  if (opt['include-dates'] || opt['include-times']) {
-    postElem.appendChild(text(timestamp(post, opt['include-dates'], opt['include-times']), 'tagplay-media-date'));
+  if (opt.include_dates || opt.include_times) {
+    postElem.appendChild(text(timestamp(post, opt.include_dates, opt.include_times), 'tagplay-media-date'));
   }
 
   container.appendChild(postElem);
@@ -237,9 +237,9 @@ function linkInfoDescription (post) {
 }
 
 function linkInfo (post, opt) {
-  var includeImage = !opt['no-link-image'];
-  var includeDescription = !opt['no-link-description'];
-  var includeEmbed = !opt['no-link-embed'] && opt.inline_link_embed;
+  var includeImage = !opt.no_link_image;
+  var includeDescription = !opt.no_link_description;
+  var includeEmbed = !opt.no_link_embed && opt.inline_link_embed;
   var el = document.createElement('div');
   el.setAttribute('class', 'tagplay-link-info');
 
