@@ -95,7 +95,7 @@ function widget (post, opt, onclick, mediaIndex) {
 
   var postText = post.text;
 
-  if (opt.include_captions || !hasMedia) {
+  if ((opt.include_captions || !hasMedia) && (!opt.no_link_captions || !post.linked_metadata || !opt.include_link_metadata)) {
     var textElem = null;
     if (postText) {
       var removeTriggers = opt.hashtags === 'remove_triggers'
