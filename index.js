@@ -243,18 +243,27 @@ function linkInfo (post, opt) {
   var el = document.createElement('div');
   el.setAttribute('class', 'tagplay-link-info');
 
+  var spinner;
+
   if (includeEmbed) {
+    spinner = loadingSpinner();
+    el.appendChild(spinner);
     opt.client.getEmbedInfo(post.linked_metadata.href, {}, function (err, data) {
       if (err) {
-        // We got an error from iframely - check if the link looks like a video file
+        // We got an error from iframely - use fallback
         fallback();
         return;
       }
-      if (data.links.player) {
+      // Check the current width of the link info element - don't embed if it's too small
+      var width = el.clientWidth;
+      if (data.links.player && width >= 250) {
         // Use iframely's provided embed HTML
         var embedWrapper = document.createElement('div');
         embedWrapper.setAttribute('class', 'tagplay-link-info-embed');
-        embedWrapper.innerHTML = data.links.player[0].html;
+        spinner.setAttribute('class', 'tagplay-spinner tagplay-spinner-absolute');
+        el.removeChild(spinner);
+        embedWrapper.appendChild(spinner);
+        embedWrapper.innerHTML += data.links.player[0].html;
 
         el.appendChild(embedWrapper);
         addTitleDesc();
@@ -271,6 +280,7 @@ function linkInfo (post, opt) {
   }
 
   function fallback () {
+    if (spinner) el.removeChild(spinner);
     if (includeImage && post.linked_metadata.image) {
       el.appendChild(linkInfoImage(post));
     }
@@ -532,8 +542,11 @@ function media (post, opt, onclick, mediaIndex) {
         if (opt.play_video) {
           options.autoplay = 1;
         }
+        var spinner = loadingSpinner();
+        mediaElem.appendChild(spinner);
         opt.client.getEmbedInfo(vidSrc, options, function (err, data) {
           if (err) {
+            mediaElem.removeChild(spinner);
             // We got an error from iframely - check if the link looks like a video file
             if (vidSrc.source_type === 'video') {
               video = vid(vidSrc, imgSrc, opt.play_video, opt.play_sound);
@@ -546,18 +559,22 @@ function media (post, opt, onclick, mediaIndex) {
           }
           if (data.links.file) {
             // Just play the file as a normal video
+            mediaElem.removeChild(spinner);
             video = vid(data.links.file[0].href, imgSrc, opt.play_video, opt.play_sound);
             video.appendChild(a);
             mediaElem.appendChild(video);
           } else if (data.links.player) {
             var embedWrapper = document.createElement('div');
             embedWrapper.setAttribute('class', 'tagplay-media-embed');
+            spinner.setAttribute('class', 'tagplay-spinner tagplay-spinner-absolute');
+            mediaElem.removeChild(spinner);
+            embedWrapper.appendChild(spinner);
             if (data.links.player[0].href) {
               // Simple embed iframe
               embedWrapper.appendChild(embed(data.links.player[0].href, selectedMedia.sources[0].width, selectedMedia.sources[0].height));
             } else {
               // Use iframely's provided embed HTML
-              embedWrapper.innerHTML = data.links.player[0].html;
+              embedWrapper.innerHTML += data.links.player[0].html;
 
               if (data.meta.site === 'Facebook') {
                 loadFB(embedWrapper);
@@ -565,7 +582,8 @@ function media (post, opt, onclick, mediaIndex) {
             }
             mediaElem.appendChild(embedWrapper);
           } else {
-            // We don't have a player - just append the a
+            // We don't have a player - just remove the spinner and append the a
+            mediaElem.removeChild(spinner);
             mediaElem.appendChild(a);
           }
         });
@@ -605,6 +623,12 @@ function vid (src, poster, autoplay, playSound) {
   if (autoplay) video.setAttribute('autoplay', true);
   if (poster) video.setAttribute('poster', poster);
   return video;
+}
+
+function loadingSpinner () {
+  var spinner = document.createElement('div');
+  spinner.setAttribute('class', 'tagplay-spinner');
+  return spinner;
 }
 
 function text (txt, className) {
