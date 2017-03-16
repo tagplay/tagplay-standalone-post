@@ -66,8 +66,6 @@ function widget (post, opt, onclick, mediaIndex) {
   }
 
   if (opt.include_usernames) {
-    var usernameElem = text('', 'tagplay-media-username');
-    var usernameLink = document.createElement('a');
     var href;
     if (post.provider.name === 'instagram') {
       href = 'https://instagram.com/' + post.provider.username;
@@ -75,8 +73,14 @@ function widget (post, opt, onclick, mediaIndex) {
       href = 'https://twitter.com/' + post.provider.username;
     } else if (post.provider.name === 'facebook') {
       href = 'https://www.facebook.com/' + post.provider.user_id;
+    } else if (post.provider.name === 'youtube') {
+      href = 'https://www.youtube.com/channel/' + post.provider.user_id;
+    } else if (post.provider.origin) {
+      href = post.provider.origin;
     }
-    usernameLink.setAttribute('href', href);
+    var usernameElem = text('', 'tagplay-media-username');
+    var usernameLink = document.createElement('a');
+    if (href) usernameLink.setAttribute('href', href);
     usernameLink.setAttribute('target', '_blank');
     usernameLink.appendChild(document.createTextNode(post.provider.username));
     usernameElem.appendChild(usernameLink);
