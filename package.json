@@ -24,7 +24,7 @@
   "homepage": "https://github.com/tagplay/tagplay-standalone-post",
   "dependencies": {
     "img": "^1.0.0",
-    "tagplay-text": "0.0.4",
+    "tagplay-text": "0.1.0",
     "twemoji": "^1.4.1"
   }
 }

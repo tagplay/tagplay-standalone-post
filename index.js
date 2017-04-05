@@ -105,7 +105,7 @@ function widget (post, opt, onclick, mediaIndex) {
       var removeTriggers = opt.hashtags === 'remove_triggers'
         ? opt.trigger_tags
         : opt.hashtags === 'remove';
-      var htmlized = tagplaytext.htmlize(postText, post.provider.name, post.links, removeTriggers, opt.strip_hash);
+      var htmlized = tagplaytext.htmlize(postText, post.formatting, post.provider.name, post.links, removeTriggers, opt.strip_hash);
       postText = twemoji.parse(htmlized);
       if (postText) {
         textElem = text(postText, 'tagplay-media-text');
@@ -233,7 +233,7 @@ function linkInfoDescription (post) {
 
   var link = linkInfoLink(post);
 
-  var htmlized = tagplaytext.htmlize(post.linked_metadata.description, post.provider.name);
+  var htmlized = tagplaytext.htmlize(post.linked_metadata.description, 'plaintext', post.provider.name);
   link.innerHTML = twemoji.parse(htmlized);
 
   el.appendChild(link);
