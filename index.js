@@ -7,7 +7,7 @@ var twemoji = require('twemoji');
 module.exports = widget;
 
 function isPostEmpty (post, opt) {
-  return !post.text && !(post.image && !opt.no_images) && !(post.video && !opt.no_videos) && !(post.linked_metadata && opt.include_link_metadata);
+  return !post.text && !((post.images.length > 0 || post.videos.length > 0) && !opt.no_images) && !(post.videos.length > 0 && !opt.no_videos) && !(post.linked_metadata && opt.include_link_metadata);
 }
 
 function widget (post, opt, onclick, mediaIndex) {
@@ -87,7 +87,7 @@ function widget (post, opt, onclick, mediaIndex) {
     postElem.appendChild(usernameElem);
   }
 
-  var hasMedia = post.image && !opt.no_images || post.video && !opt.no_videos;
+  var hasMedia = post.images.length > 0 && !opt.no_images || post.videos.length > 0 && !opt.no_videos;
 
   if (hasMedia) {
     if (numMedia > 1 && mediaIndex === undefined) {
