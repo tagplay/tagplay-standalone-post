@@ -227,13 +227,22 @@ function linkInfoTitle (post) {
   return el;
 }
 
-function linkInfoDescription (post) {
+function linkInfoDescription (post, opt) {
   var el = document.createElement('p');
   el.setAttribute('class', 'tagplay-link-info-description');
 
   var link = linkInfoLink(post);
 
-  var htmlized = tagplaytext.htmlize(post.linked_metadata.description, 'plaintext', post.provider.name);
+  var description = post.linked_metadata.description;
+
+  if (!opt.full_link_description && opt.lightbox) {
+    description = description.substring(0, 100);
+    if (post.linked_metadata.description.length > 100) {
+      description += '...';
+    }
+  }
+
+  var htmlized = tagplaytext.htmlize(description, 'plaintext', post.provider.name);
   link.innerHTML = twemoji.parse(htmlized);
 
   el.appendChild(link);
@@ -294,7 +303,7 @@ function linkInfo (post, opt) {
   function addTitleDesc () {
     el.appendChild(linkInfoTitle(post));
     if (includeDescription && post.linked_metadata.description) {
-      el.appendChild(linkInfoDescription(post));
+      el.appendChild(linkInfoDescription(post, opt));
     }
   }
   return el;
