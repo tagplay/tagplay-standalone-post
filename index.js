@@ -513,6 +513,9 @@ function getPostMedia (post, opt) {
   } else {
     var medias = post.videos.concat(post.images);
     medias.sort(function (a, b) {
+      if ((a.order === null || a.order === undefined) && (b.order === null || b.order === undefined)) return 0;
+      if (b.order === null || b.order === undefined) return -1;
+      if (a.order === null || a.order === undefined) return 1;
       return a.order - b.order;
     });
     return medias;
