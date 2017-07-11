@@ -398,70 +398,69 @@ function mediaMultiple (post, opt, onclick) {
     }
 
     var patterns = {
-      'side-by-side': function (medias) {
-        var aspectRatio = medias.portrait.reduce(function (sum, media) {
+      'side-by-side': function (medias, aspectRatioObj) {
+        var aspectRatio = medias.reduce(function (sum, media) {
           return sum + getNormalizedHeight(media);
-        }, 0) / medias.portrait.length;
+        }, 0) / medias.length;
 
-        return medias.portrait.map(function (media, i) {
-          return cell(mediaElement(media, aspectRatio), 100 / medias.portrait.length);
+        return medias.map(function (media, i) {
+          return cell(mediaElement(media, aspectRatio), 100 / medias.length);
         });
       },
-      'stacked': function (medias) {
-        return medias.landscape.map(function (media) {
-          return row(mediaElement(media, 100 / medias.landscape.length));
+      'stacked': function (medias, aspectRatioObj) {
+        return medias.map(function (media) {
+          return row(mediaElement(media, 100 / medias.length));
         });
       },
-      'landscape-portraits': function (medias) {
-        var aspectRatio = medias.portrait.reduce(function (sum, media) {
+      'landscape-portraits': function (medias, aspectRatioObj) {
+        var aspectRatio = aspectRatioObj.portrait.reduce(function (sum, media) {
           return sum + getNormalizedHeight(media);
         }, 0) / 2;
 
         return [
-          row(mediaElement(medias.landscape[0])),
-          row(medias.portrait.map(function (media) {
+          row(mediaElement(aspectRatioObj.landscape[0])),
+          row(aspectRatioObj.portrait.map(function (media) {
             return cell(mediaElement(media, aspectRatio));
           }))
         ];
       },
-      'portrait-landscapes': function (medias) {
-        var aspectRatio = (getNormalizedHeight(medias.portrait[0]) + medias.landscape.reduce(function (sum, media) {
+      'portrait-landscapes': function (medias, aspectRatioObj) {
+        var aspectRatio = (getNormalizedHeight(aspectRatioObj.portrait[0]) + aspectRatioObj.landscape.reduce(function (sum, media) {
           return sum + getNormalizedHeight(media);
         }, 0)) / 2;
         return [
-          cell(mediaElement(medias.portrait[0], aspectRatio)),
-          cell(medias.landscape.map(function (media) {
+          cell(mediaElement(aspectRatioObj.portrait[0], aspectRatio)),
+          cell(aspectRatioObj.landscape.map(function (media) {
             return row(mediaElement(media, aspectRatio / 2));
           }))
         ];
       },
-      'two-squares': function (medias) {
-        return medias.portrait.concat(medias.landscape).map(function (media) {
+      'two-squares': function (medias, aspectRatioObj) {
+        return medias.map(function (media) {
           return cell(mediaElement(media, 100));
         });
       },
-      'two-by-two': function (medias) {
-        var media = medias.portrait.concat(medias.landscape);
+      'two-by-two': function (medias, aspectRatioObj) {
         var span = document.createElement('span');
         span.setAttribute('class', 'tagplay-media-multi-more-text');
         span.appendChild(document.createTextNode('+' + (numPhotos - 3)));
         return [
           row([
-            cell(mediaElement(media[0], 100)),
-            cell(mediaElement(media[1], 100))
+            cell(mediaElement(medias[0], 100)),
+            cell(mediaElement(medias[1], 100))
           ]),
           row([
-            cell(mediaElement(media[2], 100)),
+            cell(mediaElement(medias[2], 100)),
             cell(numPhotos > 4 ? [
-              mediaElement(media[3], 100),
+              mediaElement(medias[3], 100),
               div(span, 'tagplay-media-multi-more')
-            ] : mediaElement(media[3], 100))
+            ] : mediaElement(medias[3], 100))
           ])
         ];
       }
     };
 
-    return patterns[pattern](medias);
+    return patterns[pattern](medias, aspectRatioObj);
   }
 
   function getPattern (medias) {
@@ -505,14 +504,18 @@ function mediaMultiple (post, opt, onclick) {
 
   var pattern = getPattern(aspectRatioObj);
 
-  return div(arrangeMediaElements(pattern, aspectRatioObj, medias.length), 'tagplay-media tagplay-media-multi');
+  return div(arrangeMediaElements(pattern, medias, aspectRatioObj, medias.length), 'tagplay-media tagplay-media-multi');
 }
 
 function getPostMedia (post, opt) {
   if (opt.no_images) {
     return post.videos;
   } else {
-    return post.videos.concat(post.images);
+    var medias = post.videos.concat(post.images);
+    medias.sort(function (a, b) {
+      return a.order - b.order;
+    });
+    return medias;
   }
 }
 
