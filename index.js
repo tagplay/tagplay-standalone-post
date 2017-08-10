@@ -269,19 +269,21 @@ function linkInfo (post, opt) {
       }
       // Check the current width of the link info element - don't embed if it's too small
       var width = el.clientWidth;
-      if (data.links.player && width >= 250) {
+      if ((data.links.player || data.links.app) && width >= 250) {
         // Use iframely's provided embed HTML
         var embedWrapper = document.createElement('div');
         embedWrapper.setAttribute('class', 'tagplay-link-info-embed');
         spinner.setAttribute('class', 'tagplay-spinner tagplay-spinner-absolute');
         el.removeChild(spinner);
         embedWrapper.appendChild(spinner);
-        embedWrapper.innerHTML += data.links.player[0].html;
+        embedWrapper.innerHTML += data.links.player && data.links.player[0].html || data.links.app && data.links.app[0].html;
 
         el.appendChild(embedWrapper);
         addTitleDesc();
         if (data.meta.site === 'Facebook') {
           loadFB(el);
+        } else if (data.meta.site === 'Twitter') {
+          loadTwitter(el);
         }
       } else {
         // We don't have a player - just use the fallback
@@ -582,24 +584,31 @@ function media (post, opt, onclick, mediaIndex) {
             video = vid(data.links.file[0].href, imgSrc, opt.play_video, opt.play_sound);
             video.appendChild(a);
             mediaElem.appendChild(video);
-          } else if (data.links.player) {
+          } else if (data.links.player || data.links.app) {
             var embedWrapper = document.createElement('div');
             embedWrapper.setAttribute('class', 'tagplay-media-embed');
             spinner.setAttribute('class', 'tagplay-spinner tagplay-spinner-absolute');
             mediaElem.removeChild(spinner);
             embedWrapper.appendChild(spinner);
-            if (data.links.player[0].href) {
+            if (data.links.player && data.links.player[0].href) {
               // Simple embed iframe
               embedWrapper.appendChild(embed(data.links.player[0].href, selectedMedia.sources[0].width, selectedMedia.sources[0].height));
+              mediaElem.appendChild(embedWrapper);
             } else {
               // Use iframely's provided embed HTML
-              embedWrapper.innerHTML += data.links.player[0].html;
+              embedWrapper.innerHTML += data.links.player && data.links.player[0].html || data.links.app && data.links.app[0].html;
+              mediaElem.appendChild(embedWrapper);
 
               if (data.meta.site === 'Facebook') {
                 loadFB(embedWrapper);
+              } if (data.meta.site === 'Twitter') {
+                loadTwitter(embedWrapper);
+                embedWrapper.style.marginTop = '-10px';
+                embedWrapper.style.marginBottom = '-10px';
+                embedWrapper.style.paddingLeft = '1px';
+                embedWrapper.style.paddingRight = '1px';
               }
             }
-            mediaElem.appendChild(embedWrapper);
           } else {
             // We don't have a player - just remove the spinner and append the a
             mediaElem.removeChild(spinner);
@@ -685,4 +694,27 @@ function loadFB (elem) {
       fjs.parentNode.insertBefore(js, fjs);
     }
   }(document, 'script', 'facebook-jssdk'));
+}
+
+function loadTwitter (elem) {
+  if (window.twttr && window.twttr.widgets) {
+    twttr.widgets.load();
+  } else {
+    window.twttr = (function (d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0],
+        t = window.twttr || {};
+      if (d.getElementById(id)) return t;
+      js = d.createElement(s);
+      js.id = id;
+      js.src = 'https://platform.twitter.com/widgets.js';
+      fjs.parentNode.insertBefore(js, fjs);
+
+      t._e = [];
+      t.ready = function (f) {
+        t._e.push(f);
+      };
+
+      return t;
+    }(document, 'script', 'twitter-wjs'));
+  }
 }
