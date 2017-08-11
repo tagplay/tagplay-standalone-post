@@ -603,10 +603,7 @@ function media (post, opt, onclick, mediaIndex) {
                 loadFB(embedWrapper);
               } if (data.meta.site === 'Twitter') {
                 loadTwitter(embedWrapper);
-                embedWrapper.style.marginTop = '10px';
-                embedWrapper.style.marginBottom = '-10px';
-                embedWrapper.style.paddingLeft = '1px';
-                embedWrapper.style.paddingRight = '1px';
+                embedWrapper.className += ' tagplay-media-embed-tweet';
               }
             }
           } else {
