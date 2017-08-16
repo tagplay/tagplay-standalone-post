@@ -25,6 +25,6 @@
   "dependencies": {
     "img": "^1.0.0",
     "tagplay-text": "0.1.2",
-    "twemoji": "^1.4.1"
+    "twemoji": "^2.5.0"
   }
 }
