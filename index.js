@@ -279,11 +279,16 @@ function linkInfo (post, opt) {
         embedWrapper.innerHTML += data.links.player && data.links.player[0].html || data.links.app && data.links.app[0].html;
 
         el.appendChild(embedWrapper);
-        addTitleDesc();
+        if (data.links.player) {
+          // Only add title and description if it's a player, not an app
+          addTitleDesc();
+        }
         if (data.meta.site === 'Facebook') {
           loadFB(el);
         } else if (data.meta.site === 'Twitter') {
           loadTwitter(el);
+        } else if (data.meta.site === 'Instagram') {
+          loadInstagram(el);
         }
       } else {
         // We don't have a player - just use the fallback
@@ -601,7 +606,7 @@ function media (post, opt, onclick, mediaIndex) {
 
               if (data.meta.site === 'Facebook') {
                 loadFB(embedWrapper);
-              } if (data.meta.site === 'Twitter') {
+              } else if (data.meta.site === 'Twitter') {
                 loadTwitter(embedWrapper);
                 embedWrapper.className += ' tagplay-media-embed-tweet';
               }
@@ -713,5 +718,23 @@ function loadTwitter (elem) {
 
       return t;
     }(document, 'script', 'twitter-wjs'));
+  }
+}
+
+function loadInstagram (elem) {
+  if (window.instgrm && window.instgrm.Embeds) {
+    instgrm.Embeds.process();
+  } else {
+    (function (d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0],
+        t = window.instgrm || {};
+      if (d.getElementById(id)) return t;
+      js = d.createElement(s);
+      js.id = id;
+      js.src = 'https://platform.instagram.com/en_US/embeds.js';
+      fjs.parentNode.insertBefore(js, fjs);
+
+      return t;
+    }(document, 'script', 'instagram-wjs'));
   }
 }
