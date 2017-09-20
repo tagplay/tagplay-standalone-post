@@ -538,7 +538,15 @@ function media (post, opt, onclick, mediaIndex) {
   var mediaElem = document.createElement('div');
   mediaElem.setAttribute('class', 'tagplay-media');
 
-  var image = img(imgSrc);
+  var image;
+  if (imgSrc) {
+    image = img(imgSrc);
+  } else {
+    // Black background fallback
+    image = document.createElement('div');
+    image.style.paddingTop = (selectedMedia.sources[0].width ? selectedMedia.sources[0].height * 100 / selectedMedia.sources[0].width : 100) + '%';
+    image.style.backgroundColor = '#000';
+  }
   image.setAttribute('class', 'tagplay-media-object');
   var a = link(post.provider.origin || imgSrc);
   a.appendChild(image);
