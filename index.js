@@ -447,6 +447,15 @@ function mediaMultiple (post, opt, onclick) {
           return cell(mediaElement(media, 100));
         });
       },
+      'three-squares': function (medias, aspectRatioObj) {
+        return [
+          row(mediaElement(medias[0], 100)),
+          row([
+            cell(mediaElement(medias[1], 100)),
+            cell(mediaElement(medias[2], 100))
+          ])
+        ];
+      },
       'two-by-two': function (medias, aspectRatioObj) {
         var span = document.createElement('span');
         span.setAttribute('class', 'tagplay-media-multi-more-text');
@@ -474,6 +483,9 @@ function mediaMultiple (post, opt, onclick) {
     var totalMedias = medias.portrait.length + medias.landscape.length;
     if (totalMedias >= 4) {
       return 'two-by-two';
+    } else if (medias.portrait.length === 3) {
+      // Three portraits; one big square and two smaller below
+      return 'three-squares';
     } else if (medias.portrait.length === 0) {
       // Two or three landscapes; stack them
       return 'stacked';
