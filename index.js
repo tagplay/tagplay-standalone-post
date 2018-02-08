@@ -208,7 +208,13 @@ function linkInfoLink (post) {
 }
 
 function linkInfoImage (post) {
-  var image = img(post.linked_metadata.image.sources[0].url);
+  var image = img(post.linked_metadata.image.sources[0].url, function (err, elem) {
+    if (err) {
+      if (image.parentNode && image.parentNode.parentNode) {
+        image.parentNode.parentNode.removeChild(image.parentNode);
+      }
+    }
+  });
   image.setAttribute('class', 'tagplay-link-info-image');
   var link = linkInfoLink(post);
   link.appendChild(image);
@@ -541,6 +547,13 @@ function getPostMedia (post, opt) {
   }
 }
 
+function imageFallback (width, height) {
+  var image = document.createElement('div');
+  image.style.paddingTop = (width ? height * 100 / width : 100) + '%';
+  image.style.backgroundColor = '#000';
+  return image;
+}
+
 function media (post, opt, onclick, mediaIndex) {
   var postMedia = getPostMedia(post, opt);
   var selectedMedia = postMedia[mediaIndex || 0];
@@ -552,12 +565,27 @@ function media (post, opt, onclick, mediaIndex) {
 
   var image;
   if (imgSrc) {
-    image = img(imgSrc);
+    image = img(imgSrc, function (err, elem) {
+      if (err) {
+        if (image.parentNode && image.parentNode.parentNode && image.parentNode.parentNode.parentNode) {
+          if (image.parentNode.parentNode.nodeName === 'VIDEO') {
+            // Just remove the fallback link and image.
+            image.parentNode.parentNode.removeChild(image.parentNode);
+          } else if (image.parentNode.parentNode.className.indexOf('tagplay-media-video') !== -1) {
+            // We'd rather the fallback for a video be a black box.
+            var parent = image.parentNode;
+            parent.removeChild(image);
+            parent.appendChild(imageFallback(selectedMedia.sources[0].width, selectedMedia.sources[0].height));
+          } else {
+            // This is presumably just an image
+            image.parentNode.parentNode.parentNode.removeChild(image.parentNode.parentNode);
+          }
+        }
+      }
+    });
   } else {
     // Black background fallback
-    image = document.createElement('div');
-    image.style.paddingTop = (selectedMedia.sources[0].width ? selectedMedia.sources[0].height * 100 / selectedMedia.sources[0].width : 100) + '%';
-    image.style.backgroundColor = '#000';
+    image = imageFallback(selectedMedia.sources[0].width, selectedMedia.sources[0].height);
   }
   image.setAttribute('class', 'tagplay-media-object');
   var a = link(post.provider.origin || imgSrc);
