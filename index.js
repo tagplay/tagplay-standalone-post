@@ -105,7 +105,13 @@ function widget (post, opt, onclick, mediaIndex) {
       var removeTriggers = opt.hashtags === 'remove_triggers'
         ? opt.trigger_tags
         : opt.hashtags === 'remove';
-      var htmlized = tagplaytext.htmlize(postText, post.formatting, post.provider.name, post.links, removeTriggers, opt.strip_hash);
+      var htmlized = tagplaytext.htmlize(postText, {
+        formatting: post.formatting,
+        provider: post.provider.name,
+        links: post.links,
+        strippedTags: removeTriggers,
+        normalize: opt.strip_hash
+      });
       postText = twemoji.parse(htmlized);
       if (postText) {
         textElem = text(postText, 'tagplay-media-text');
@@ -248,7 +254,7 @@ function linkInfoDescription (post, opt) {
     }
   }
 
-  var htmlized = tagplaytext.htmlize(description, 'plaintext', post.provider.name);
+  var htmlized = tagplaytext.htmlize(description, { formatting: post.linked_metadata.formatting || 'plaintext', provider: post.provider.name});
   link.innerHTML = twemoji.parse(htmlized);
 
   el.appendChild(link);
